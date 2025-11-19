@@ -183,6 +183,39 @@ def pack_health_label(score):
         return "WATCH", "#eab308"
     else:
         return "CRITICAL", "#dc2626"
+        def normalize_bms_columns(df):
+    """
+    Try to automatically map messy CSV column names
+    to the internal names: voltage, current, temperature, soc, cycle.
+    """
+    df = df.copy()
+
+    simplified = {
+        col: "".join(ch for ch in col.lower() if ch.isalnum())
+        for col in df.columns
+    }
+
+    patterns = {
+        "voltage": ["volt", "vcell", "cellv", "packv"],
+        "current": ["curr", "amp", "current", "ichg", "idis"],
+        "temperature": ["temp", "temperature", "celltemp", "packtemp"],
+        "soc": ["soc", "stateofcharge"],
+        "cycle": ["cycle", "cyclecount", "chargecycle", "cycleindex"],
+    }
+
+    col_map = {}
+
+    for target, keys in patterns.items():
+        for orig, s in simplified.items():
+            if any(k in s for k in keys):
+                if target not in col_map:
+                    col_map[target] = orig
+                break
+
+    rename_dict = {orig: target for target, orig in col_map.items()}
+    df = df.rename(columns=rename_dict)
+
+    return df, col_map
 # -----------------------------
 # 5. Custom CSS for UI
 # -----------------------------
@@ -336,23 +369,39 @@ def main():
         st.info("Using built-in simulated BMS data.")
     else:
         uploaded = st.sidebar.file_uploader("📂 Upload BMS CSV", type=["csv"])
-        if uploaded:
+        if uploaded is not None:
             df_raw = pd.read_csv(uploaded)
             st.success("CSV loaded successfully.")
         else:
             st.warning("Upload a CSV or switch to sample data.")
             st.stop()
 
+    # 🔁 Try to auto-normalize messy column names
+    df_raw, col_map = normalize_bms_columns(df_raw)
+
+    if col_map:
+        mapped_text = ", ".join(
+            [f'"{orig}" → **{target}**' for target, orig in col_map.items()]
+        )
+        st.info(f"Auto-mapped columns: {mapped_text}")
+    else:
+        st.warning(
+            "Could not auto-detect standard columns. "
+            "Make sure voltage/current/temperature/SOC/cycle columns exist in your file."
+        )
 
     with st.expander("👀 Raw BMS Preview", expanded=False):
         st.dataframe(df_raw.head(), use_container_width=True)
 
-
     required_cols = ["voltage", "current", "temperature", "soc", "cycle"]
     missing = [c for c in required_cols if c not in df_raw.columns]
     if missing:
-        st.error(f"Missing required columns: {missing}")
+        st.error(
+            f"Still missing required logical columns: {missing}. "
+            "Please rename your columns or adjust the CSV."
+        )
         st.stop()
+    
 
 
     # --------- PIPELINE ----------
@@ -606,4 +655,5 @@ def main():
 
 # ENTRYPOINT
 if __name__ == "__main__":
+
     main()
