@@ -403,10 +403,31 @@ def main():
         [" Health Timeline", " Anomaly Explorer", " Data & Export"]
     )
 
-    # --- Tab 1: Health Timeline ---
     with tab_overview:
         left, right = st.columns([2.5, 1])
+
         with left:
             st.markdown("#### Health Score Over Time")
             fig_health = px.area(
-                df_o
+                df_out,
+                x="time",
+                y="battery_health_score",
+                labels={
+                    "time": "Time",
+                    "battery_health_score": "Health Score (0–100)",
+                },
+            )
+            fig_health.update_traces(line_shape="spline")
+            fig_health.update_layout(
+                margin=dict(l=10, r=10, t=40, b=10)
+            )
+            st.plotly_chart(fig_health, use_container_width=True)
+
+        with right:
+            st.markdown("#### ℹ️ What this shows")
+            st.markdown(
+                "- Each point = one timestamp from your BMS data.\n"
+                "- Smooth curve = how health changes with usage and temperature.\n"
+                "- Sudden drops = stress events, imbalance, or overheating.\n"
+                "- For EVs: compare before/after fast-charging or hill climbs."
+            )
