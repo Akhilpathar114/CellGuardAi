@@ -13,6 +13,39 @@ import plotly.graph_objects as go
 from sklearn.ensemble import IsolationForest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LinearRegression
+def normalize_bms_columns(df):
+    """
+    Auto-map messy CSV column names to standard ones:
+    voltage, current, temperature, soc, cycle.
+    """
+    df = df.copy()
+
+    simplified = {
+        col: "".join(ch for ch in col.lower() if ch.isalnum())
+        for col in df.columns
+    }
+
+    patterns = {
+        "voltage": ["volt", "vcell", "cellv", "packv"],
+        "current": ["curr", "amp", "amps", "current", "ichg", "idis"],
+        "temperature": ["temp", "temperature", "celltemp", "packtemp"],
+        "soc": ["soc", "stateofcharge"],
+        "cycle": ["cycle", "cyclecount", "chargecycle", "cycleindex"],
+    }
+
+    col_map = {}
+
+    for target, keys in patterns.items():
+        for orig, s in simplified.items():
+            if any(k in s for k in keys):
+                if target not in col_map:
+                    col_map[target] = orig
+                break
+
+    rename_dict = {orig: target for target, orig in col_map.items()}
+    df = df.rename(columns=rename_dict)
+
+    return df, col_map
 
 
 
@@ -659,5 +692,6 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
