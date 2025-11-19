@@ -183,7 +183,7 @@ def pack_health_label(score):
         return "WATCH", "#eab308"
     else:
         return "CRITICAL", "#dc2626"
-        def normalize_bms_columns(df):
+def normalize_bms_columns(df):
             """
               Try to automatically map messy CSV column names
               to the internal names: voltage, current, temperature, soc, cycle.
@@ -289,7 +289,9 @@ def add_custom_css():
     )
 
 
-
+def main():
+    ...
+    df_raw, col_map = normalize_bms_columns(df_raw)
 
 # -----------------------------
 # 6. Main App
@@ -657,4 +659,5 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
