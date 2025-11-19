@@ -184,15 +184,15 @@ def pack_health_label(score):
     else:
         return "CRITICAL", "#dc2626"
         def normalize_bms_columns(df):
-    """
-    Try to automatically map messy CSV column names
-    to the internal names: voltage, current, temperature, soc, cycle.
-    """
-    df = df.copy()
+            """
+              Try to automatically map messy CSV column names
+              to the internal names: voltage, current, temperature, soc, cycle.
+            """
+            df = df.copy()
 
-    simplified = {
-        col: "".join(ch for ch in col.lower() if ch.isalnum())
-        for col in df.columns
+            simplified = {
+            col: "".join(ch for ch in col.lower() if ch.isalnum())
+            for col in df.columns
     }
 
     patterns = {
@@ -657,3 +657,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
